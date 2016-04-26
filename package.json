@@ -1,0 +1,23 @@
+{
+  "name": "fcstats-dbimporter",
+  "version": "1.0.0",
+  "description": "fcstats dbimporter module",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -R spec"
+  },
+  "author": "Ovidiu Bute <ovidiu.bute@gmail.com> (http://ovidiubute.com)",
+  "license": "ISC",
+  "dependencies": {
+    "fcstats-persistence": "ovidiubute/fcstats-persistence",
+    "fcstats-models": "ovidiubute/fcstats-models",
+    "fcstats-vogels-adapter": "ovidiubute/fcstats-vogels-adapter",
+    "fcstats-transformer": "ovidiubute/fcstats-transformer",
+    "fcstats-parser": "ovidiubute/fcstats-parser",
+    "fcstats-staticdata": "ovidiubute/fcstats-staticdata"
+  },
+  "devDependencies": {
+    "istanbul": "^0.4.3",
+    "mocha": "^2.4.5"
+  }
+}
