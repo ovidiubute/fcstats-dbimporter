@@ -1,6 +1,6 @@
 {
   "name": "fcstats-dbimporter",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "fcstats dbimporter module",
   "main": "index.js",
   "scripts": {
