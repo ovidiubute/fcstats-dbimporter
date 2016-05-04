@@ -1,33 +1,34 @@
 "use strict";
 
-var path = require('path');
-var process = require('process');
+const main = require('./src/main');
+const q = require('promised-io/promise');
+const util = require('util');
+const path = require('path');
+const fs = require('fs');
 
-function staticPath(countryCode, csvFilename) {
-  return path.join(process.cwd(), '/node_modules/fcstats-staticdata/' + countryCode + '/' + csvFilename + '.csv');
+const relativeDataPath = '../../FootballData/football-data.co.uk/';
+const countries = [
+  'france',
+  'germany',
+  'spain',
+  'italy',
+  'greece',
+  'netherlands',
+  'portulgal',
+  'turkey',
+  'scotland',
+  'belgium'
+]
+let years = [];
+for (let i = 1995; i <= 2014; i++) {
+  years.push(util.format('%s-%s', i, i + 1));
 }
 
-// Init persistence layer
-var persistence = require('fcstats-persistence');
-persistence.createTables().then(function () {
-  // Import data
-  var main = require('./src/main');
-  main.fromCsv([
-    // English Premiership
-    staticPath('en', 'en_E0_1993-1994'),
+let promises = countries.map((country) => {
+  const dirPath = path.join(process.cwd(), relativeDataPath + country + '/');
+  return main.import(dirPath, 'fcstats0_3.json');
+})
 
-    // Bundesliga
-    staticPath('de', 'de_D1_1993-1994'),
-
-    // La Liga
-    staticPath('es', 'es_SP1_1993-1994'),
-
-    // Scotland Premiership
-    staticPath('sc', 'sc_SC0_1994-1995'),
-
-    // Turkish
-    staticPath('tr', 'tr_T1_1994-1995')
-  ]);
+q.all(promises).then((results) => {
+  console.log(results);
 });
-
-module.exports = require('./src/main');

@@ -9,12 +9,9 @@
   "author": "Ovidiu Bute <ovidiu.bute@gmail.com> (http://ovidiubute.com)",
   "license": "ISC",
   "dependencies": {
-    "fcstats-persistence": "ovidiubute/fcstats-persistence",
     "fcstats-models": "ovidiubute/fcstats-models",
-    "fcstats-vogels-adapter": "ovidiubute/fcstats-vogels-adapter",
-    "fcstats-transformer": "ovidiubute/fcstats-transformer",
     "fcstats-parser": "ovidiubute/fcstats-parser",
-    "fcstats-staticdata": "ovidiubute/fcstats-staticdata"
+    "fcstats-persistence": "ovidiubute/fcstats-persistence"
   },
   "devDependencies": {
     "istanbul": "^0.4.3",

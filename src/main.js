@@ -1,56 +1,53 @@
 "use strict";
 
 var parser = require('fcstats-parser');
-var transformer = require('fcstats-transformer');
-var adapter = require('fcstats-vogels-adapter');
-var MatchEntity = require('fcstats-persistence').models.match;
-var SeasonModel = require('fcstats-models').SeasonModel;
+var persistence = require('fcstats-persistence');
+var q = require('promised-io/promise');
 
 module.exports = {
-  fromCsv: function (fileNames) {
-    if (Object.prototype.toString.call(fileNames) !== '[object Array]') {
-      fileNames = [fileNames];
-    }
+  import: function (dir, dbname) {
+    return q.seq([
+      () => {
+        return parser.parseDirectory(dir)
+      },
+      (results) => {
+        return q.seq([
+          () => {
+            return persistence.createDatabase(dbname);
+          },
+          (db) => {
+            return q.seq([
+              () => {
+                return persistence.createTable(db, 'matches', {
+                  unique: ['matchId']
+                });
+              },
+              (table) => {
+                return q.all(results.map((result) => {
+                  return result.matches.map((match) => {
+                    return persistence.insert(table, match);
+                  });
+                }));
+              },
+              (results) => {
+                var deferred = q.defer();
 
-    fileNames.forEach(function (fileName) {
-      console.log("Parsing " + fileName + "...");
-      parser.fromFile(fileName).then(function (result) {
-        // Season must be set for all matches, parse it from file name
-        var seasonYears = parser.extractSeasonYears(fileName);
-        var leagueName = parser.extractLeagueName(fileName);
-        var seasonModel = new SeasonModel({yearStart: seasonYears[0], yearEnd: seasonYears[1], leagueName: leagueName});
+                process.nextTick(() => {
+                  db.saveDatabase();
+                  const matchCount = results.map((matches) => {
+                    return matches.length;
+                  }).reduce((prev, cur) => {
+                    return prev + cur;
+                  }, 0);
+                  deferred.resolve("Imported " + matchCount + " matches in the DB.");
+                });
 
-        var matchAttrsList = result.map(function (matchArray) {
-          var model = transformer.match.fromArray(matchArray, seasonModel);
-          return adapter.convertFromModel(model);
-        });
-
-        console.log("Adding DB items...");
-
-        // All of this because of DynamoDB provisioned throughput...
-        var chunkedMatchAttrs = [];
-        var size = 30;
-        for (var i = 0; i < matchAttrsList.length; i += size) {
-          chunkedMatchAttrs.push(matchAttrsList.slice(i, size + i));
-        }
-
-        chunkedMatchAttrs.forEach(function (chunk) {
-          setTimeout(function () {
-            chunk.forEach(function (matchPlainModel) {
-              MatchEntity.create(matchPlainModel, {overwrite: false}, function (err, match) {
-                if (err) {
-                  console.log("Could not create DB match: " + err);
-                } else {
-                  console.log("Created DB match: " + JSON.stringify(match));
-                }
-              });
-            });
-          }, 60000);
-        });
-      }, function (err) {
-        console.log(err);
-        throw new Error('Could not parse, ending everything right now: ' + err);
-      });
-    });
+                return deferred.promise;
+              }
+            ]);
+          }
+        ])
+      }
+    ]);
   }
 };
