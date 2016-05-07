@@ -23,23 +23,14 @@ module.exports = {
                 });
               },
               (table) => {
-                return q.all(results.map((result) => {
-                  return result.matches.map((match) => {
-                    return persistence.insert(table, match);
-                  });
+                return q.all(results.map((match) => {
+                  return persistence.insert(table, match);
                 }));
               },
               (results) => {
                 var deferred = q.defer();
-
                 process.nextTick(() => {
                   db.saveDatabase();
-                  const matchCount = results.map((matches) => {
-                    return matches.length;
-                  }).reduce((prev, cur) => {
-                    return prev + cur;
-                  }, 0);
-                  deferred.resolve("Imported " + matchCount + " matches in the DB.");
                 });
 
                 return deferred.promise;
