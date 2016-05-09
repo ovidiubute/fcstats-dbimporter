@@ -1,7 +1,7 @@
 "use strict";
 
 var parser = require('fcstats-parser');
-var persistence = require('fcstats-persistence');
+var persistence = require('fcstats-persistence').lib;
 var q = require('promised-io/promise');
 
 module.exports = {
@@ -11,33 +11,26 @@ module.exports = {
         return parser.parseDirectory(dir)
       },
       (results) => {
+        let db = persistence.newDatabase(dbname);
+        let table = persistence.createTable(db, 'matches', {
+          unique: ['matchId']
+        });
+        
         return q.seq([
           () => {
-            return persistence.createDatabase(dbname);
+            return q.all(results.map((match) => {
+              return persistence.insert(table, match);
+            }));
           },
-          (db) => {
-            return q.seq([
-              () => {
-                return persistence.createTable(db, 'matches', {
-                  unique: ['matchId']
-                });
-              },
-              (table) => {
-                return q.all(results.map((match) => {
-                  return persistence.insert(table, match);
-                }));
-              },
-              (results) => {
-                var deferred = q.defer();
-                process.nextTick(() => {
-                  db.saveDatabase();
-                });
+          (results) => {
+            var deferred = q.defer();
+            process.nextTick(() => {
+              db.saveDatabase();
+            });
 
-                return deferred.promise;
-              }
-            ]);
+            return deferred.promise;
           }
-        ])
+        ]);
       }
     ]);
   }
